@@ -1,0 +1,21 @@
+#!/bin/bash
+#
+#SBATCH --partition=c2_short
+#SBATCH --ntasks=1
+#SBATCH --mem=6000
+#SBATCH --nodes=1
+#SBATCH --workdir=/media/labs/rsmith/lab-members/cgoldman/go_no_go/DDM/RL_DDM_Millner/RL_DDM-CMG
+#SBATCH --begin=now
+#SBATCH --job-name=RL_DDM_FIT
+#
+#################################################
+
+SUBJECT=$1
+export SUBJECT
+
+RESULTS=$2
+export RESULTS
+
+module load matlab/2022a
+run_file='/media/labs/rsmith/lab-members/cgoldman/go_no_go/DDM/RL_DDM_Millner/RL_DDM-CMG/GNG_main_RLDDM.m'
+matlab -nodisplay -nosplash < ${run_file}
