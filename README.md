@@ -1,7 +1,7 @@
 RL_DDM
 ====
 
-Reinforcement learning + drift-diffusion model repository.
+Reinforcement learning + drift-diffusion model repository based on Sam Gershman's model. 
 
 Requires mfit package: https://github.com/sjgershm/mfit
 
@@ -11,4 +11,4 @@ Go/NoGo task: see load_data_gonogo.m and  fit_gonogo.m
 
 Multi-alternative value-based choice task: see fit_multi.m
 
-Questions? Contact Sam Gershman (gershman@fas.harvard.edu).
+Questions? Contact Carter Goldman (carter.goldman19@gmail.com)
