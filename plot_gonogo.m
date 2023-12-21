@@ -2,10 +2,22 @@
 
 % Plots the action probabilities, observations, and responses for the
 % gonogo
+
+% expects the following input
+    % MDP
+        % .observations [1 x N] double 
+        % .choices [1 x N] double 
+        % .action_probabilities [1 x N] double
+        
+    % states_block [N x 1] double
+        
+        
+        
+
 function [] = plot_gonogo(MDP, states_block)
 clf;
-% 
 
+% 
 % graphics
 %==========================================================================
 % % col   = {'.b','.y','.g','.r','.c','.k'};
@@ -51,7 +63,9 @@ for block = 1:4
             title('No Go to Avoid Losing');
     end
 
-    
+    % Modify y-axis ticks and labels
+    set(gca, 'YTick', [0.5, 1.5], 'YTickLabel', {'No Go', 'Go'});
+    %y_position_for_text = -0.8; % for adding text for trial number
     % Get trials for this block
     
     block_trials = find(states_block == block);
@@ -75,6 +89,7 @@ for block = 1:4
         elseif action == 2
             scatter(trial_in_block_counter, 1.5, 50, 'o', 'filled', 'MarkerEdgeColor', 'k', 'MarkerFaceColor', color);
         end
+        %text(trial, y_position_for_text, num2str(trial), 'FontSize', 8);
         trial_in_block_counter = trial_in_block_counter+1;
     end
 end

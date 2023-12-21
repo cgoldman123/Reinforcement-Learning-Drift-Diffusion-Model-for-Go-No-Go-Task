@@ -35,6 +35,6 @@ function data = load_gonogo_data(fileName)
         data(i).c = subset.c;
         data(i).r = subset.r;
         data(i).rt = subset.rt;
-        data(i).C = 2;
+%         data(i).C = 2;
         data(i).N = height(subset);
     end
