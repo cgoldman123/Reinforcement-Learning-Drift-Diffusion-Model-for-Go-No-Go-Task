@@ -6,12 +6,12 @@ SIM = false;
 FIT = true;
 use_fmincon = false;
 use_laplace = true;
-plot = false;
+plot = true;
 
 % load the data in
 if ispc
     root = 'L:';
-    fileName = 'L:/rsmith/lab-members/cgoldman/go_no_go/DDM/processed_behavioral_files_DDM/AA022_processed_behavioral_file.csv';
+    fileName = 'L:/rsmith/lab-members/cgoldman/go_no_go/DDM/processed_behavioral_files_DDM/AA164_processed_behavioral_file.csv';
     results_dir = 'L:/rsmith/lab-members/cgoldman/go_no_go/DDM/RL_DDM_Millner/RL_DDM_fits';
     lastSlashPos = find(fileName == '/', 1, 'last');
     subject = fileName(lastSlashPos + 1 : lastSlashPos + 5);

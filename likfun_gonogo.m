@@ -96,22 +96,21 @@ function [lik, latents] = likfun_gonogo(x,data)
         % accumulate log-likelihod
         % if fitting data
         if fitting
+            go_probability = integral(@(y) wfpt(y,-v,a,w),0,mx);
             % Go response
             if c == 2 
                 % Wiener first passage time distribution calculates probability density that
                 % the diffusion process hits the lower boundary at data.rt(t) - T. 
                 % We pass in negative drift rate so lower boundary becomes "go"
-             
                 time_after_nondecision = max(T,data.rt(t)-T);
                 P = wfpt(time_after_nondecision,-v,a,w);  
                 % to get the action probability of hitting the go boundary
-                action_probability = integral(@(y) wfpt(y,-v,a,w),0,mx);
-                
+                action_probability = go_probability; 
             % NoGo response
             else
                 % probability of hitting nogo boundary
-                P = integral(@(y) wfpt(y,v,a,w),0,mx);
-                action_probability = P;
+                action_probability = 1 - go_probability;
+                P = action_probability;
             end
             
         else
