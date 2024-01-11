@@ -31,4 +31,4 @@ for subject in subjects:
     print(f"SUBMITTED JOB [{jobname}]")
 
 
-    ###python3 run_RL_DDM.py /media/labs/rsmith/lab-members/cgoldman/go_no_go/DDM/RL_DDM_Millner/RL_DDM_fits
+    ###python3 run_RL_DDM.py /media/labs/rsmith/lab-members/cgoldman/go_no_go/DDM/RL_DDM_Millner/RL_DDM_fits/drift_rate_and_bias_laplace

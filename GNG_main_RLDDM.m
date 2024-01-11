@@ -11,7 +11,7 @@ plot = false;
 % load the data in
 if ispc
     root = 'L:';
-    fileName = 'L:/rsmith/lab-members/cgoldman/go_no_go/DDM/processed_behavioral_files_DDM/BB512_processed_behavioral_file.csv';
+    fileName = 'L:/rsmith/lab-members/cgoldman/go_no_go/DDM/processed_behavioral_files_DDM/AA022_processed_behavioral_file.csv';
     results_dir = 'L:/rsmith/lab-members/cgoldman/go_no_go/DDM/RL_DDM_Millner/RL_DDM_fits';
     lastSlashPos = find(fileName == '/', 1, 'last');
     subject = fileName(lastSlashPos + 1 : lastSlashPos + 5);
@@ -24,16 +24,16 @@ else
 end
 
 if SIM
-    gen_params.rs = .4750;
-    gen_params.la = .5670;
-    gen_params.alpha_win = .5532;
-    gen_params.alpha_loss = .5693;
-    gen_params.beta = .2331;
-    gen_params.zeta = .8485;
-    gen_params.pi_win = .3845;
-    gen_params.pi_loss = .4077;
-    gen_params.T = .1823;
-    gen_params.a = .9213;
+    gen_params.rs = 1;
+    gen_params.la = 1;
+    gen_params.alpha_win = .5;
+    gen_params.alpha_loss = .5;
+    gen_params.beta = .05;
+    gen_params.zeta = .9;
+    gen_params.pi_win = .05;
+    gen_params.pi_loss = .05;
+    gen_params.T = .3;
+    %gen_params.a = 1;
     disp(['Simulating game from AA022']);
     model_output = sim_gonogo(gen_params);
     
@@ -53,14 +53,14 @@ if FIT
         addpath([root '/rsmith/all-studies/util/spm12/toolbox/DEM/']);
         estimation_prior.rs = 1;
         estimation_prior.la = 1;
-        estimation_prior.alpha_win = .6;
-        estimation_prior.alpha_loss = .6;
-        estimation_prior.beta = .2;
+        estimation_prior.alpha_win = .5;
+        estimation_prior.alpha_loss = .5;
+        estimation_prior.beta = .1;
         estimation_prior.zeta = .9;
-        estimation_prior.pi_win = .5;
-        estimation_prior.pi_loss = .5;
+        estimation_prior.pi_win = .1;
+        estimation_prior.pi_loss = .1;
         estimation_prior.T = .25;
-        estimation_prior.a = 1;
+       % estimation_prior.a = 1;
         DCM.MDP = estimation_prior;
         DCM.field = fieldnames(DCM.MDP);
         DCM.U = data;
@@ -83,6 +83,8 @@ if FIT
 
     writetable(struct2table(res), [results_dir '/GNG_RLDDM-' subject '_fits.csv']);
     save([results_dir '/' subject '_fit_result'], 'fit_result');
+    saveas(gcf,[results_dir '/' subject '_fit_plot.png']);
+    
 end
 
 

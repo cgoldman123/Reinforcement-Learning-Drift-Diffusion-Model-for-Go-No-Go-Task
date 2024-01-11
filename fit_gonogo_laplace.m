@@ -35,6 +35,7 @@ if plot
     model_output.action_probabilities = latents.action_probabilities;
     model_output.observations = latents.r;
     model_output.choices = latents.c;
+    model_output.P = latents.P;
     states_block = latents.trial_type;
     plot_gonogo(model_output,states_block);
 end

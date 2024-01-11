@@ -10,6 +10,7 @@ function model_output = sim_gonogo(gen_params)
     model_output.action_probabilities = latents.action_probabilities;
     model_output.observations = latents.r;
     model_output.choices = latents.c;
+    model_output.P = latents.P;
     plot_gonogo(model_output, states_block);
     
 end

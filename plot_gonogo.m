@@ -28,8 +28,12 @@ clf;
 %          [0.3010, 0.7450, 0.9330], ...  % cyan
 %          [0, 0, 0]};                    % black
 
-% black and white cols for colormap
-cols  = [0:1/32:1; 0:1/32:1; 0:1/32:1]';
+% Create a grayscale colormap where higher values are darker
+gray_colormap = colormap(gray);
+flipped_gray_colormap = flipud(gray_colormap);
+colormap(flipped_gray_colormap);
+
+
 
 
 o = MDP.observations;
@@ -37,21 +41,35 @@ u = MDP.choices;
 
 % Initial states and expected policies
 %--------------------------------------------------------------------------
-
-choice_prob(:,:,1) = MDP.action_probabilities(states_block == 1);
-choice_prob(:,:,2) = MDP.action_probabilities(states_block == 2);
-choice_prob(:,:,3) = MDP.action_probabilities(states_block == 3);
-choice_prob(:,:,4) = MDP.action_probabilities(states_block == 4);
-
-
-
-
+% toggle this line for plotting action_probs v P (pdf of weiner
+% distribution)
+plotting_action_prob = false;
+if plotting_action_prob
+    choice_prob(:,:,1) = MDP.action_probabilities(states_block == 1);
+    choice_prob(:,:,2) = MDP.action_probabilities(states_block == 2);
+    choice_prob(:,:,3) = MDP.action_probabilities(states_block == 3);
+    choice_prob(:,:,4) = MDP.action_probabilities(states_block == 4);
+    min_P = 0;
+    max_P = 1;
+else
+% shade based on P, which takes into account reaction times of go trials
+    MDP.P = MDP.P';
+    choice_prob(:,:,1) = MDP.P(states_block == 1);
+    choice_prob(:,:,2) = MDP.P(states_block == 2);
+    choice_prob(:,:,3) = MDP.P(states_block == 3);
+    choice_prob(:,:,4) = MDP.P(states_block == 4);
+    % Determine global minimum and maximum values across all blocks for color scaling
+    min_P = 0;
+    max_P = max(MDP.P(:));
+end
 % Find the trials corresponding to each block
 for block = 1:4
 
     
     subplot(4,1,block)
-    imagesc([1 - choice_prob(:,:,block)]); colormap(cols); hold on;
+    imagesc([choice_prob(:,:,block)]);
+    caxis([min_P, max_P]);
+    hold on;
     switch block
         case 1
             title('Go to Win');
@@ -92,5 +110,7 @@ for block = 1:4
         %text(trial, y_position_for_text, num2str(trial), 'FontSize', 8);
         trial_in_block_counter = trial_in_block_counter+1;
     end
+    
+    colorbar('Position', [0.92 0.11 0.02 0.815]);
 end
 

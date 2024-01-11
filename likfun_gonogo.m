@@ -1,4 +1,4 @@
-function [lik, latents] = likfun_gonogo(x,data, fitted_params)
+function [lik, latents] = likfun_gonogo(x,data)
     rng(23);
     % Likelihood function for Go/NoGo task.
     
@@ -25,8 +25,10 @@ function [lik, latents] = likfun_gonogo(x,data, fitted_params)
     
     % if fitted_params isn't passed in, initialize to false because not
     % dealing with fitted params
-    if nargin < 3
-        fitted_params = false;
+    if ~isnan(data.r(1))
+        fitting = true;
+    else
+        fitting = false;
     end
     
     
@@ -47,14 +49,16 @@ function [lik, latents] = likfun_gonogo(x,data, fitted_params)
         zeta = x.zeta;
         pi_win = x.pi_win;
         pi_loss = x.pi_loss;
-        a = x.a;
+        %a = x.a;
         alpha_win = x.alpha_win;
         alpha_loss = x.alpha_loss;
         T = x.T;
         rs = x.rs;
         la = x.la;
     end
-        
+    % fix decision threshold to 1
+    a = 1;    
+    
     % initialization
     lik = 0; 
    % data.rt = max(eps,data.rt - T);
@@ -67,7 +71,6 @@ function [lik, latents] = likfun_gonogo(x,data, fitted_params)
     states = data.trial_type;
     
     for t = 1:data.N
-        
         % data for current trial
         c = data.c(t)+1;            % choice: 1 for no go, 2 for go
         r = data.r(t);              % reward: 0,1,-1
@@ -83,33 +86,39 @@ function [lik, latents] = likfun_gonogo(x,data, fitted_params)
             pav = pi_loss*V(s);
         end
                                     
-        % drift rate
-        v = zeta*(beta +(Q(s,2)-Q(s,1))+ pav);
-        
+        % drift rate v
+        v = zeta*(Q(s,2)-Q(s,1));
+        % starting bias w; bound between 0 and 1
+        w = .5 - (beta+pav);
+        w = max(w, .00001);
+        w = min(w,1-.00001);
+        %w = .5;
         % accumulate log-likelihod
         % if fitting data
-        if ~isnan(data.rt)
+        if fitting
             % Go response
             if c == 2 
                 % Wiener first passage time distribution calculates probability density that
                 % the diffusion process hits the lower boundary at data.rt(t) - T. 
                 % We pass in negative drift rate so lower boundary becomes "go"
-                P = wfpt(data.rt(t)-T,-v,a);  
+             
+                time_after_nondecision = max(T,data.rt(t)-T);
+                P = wfpt(time_after_nondecision,-v,a,w);  
                 % to get the action probability of hitting the go boundary
-                action_probability = integral(@(y) wfpt(y,-v,a),0,mx);
+                action_probability = integral(@(y) wfpt(y,-v,a,w),0,mx);
                 
             % NoGo response
             else
                 % probability of hitting nogo boundary
-                P = integral(@(y) wfpt(y,v,a),0,mx);
+                P = integral(@(y) wfpt(y,v,a,w),0,mx);
                 action_probability = P;
             end
             
         else
             % simulating data
             % get probability of hitting go boundary during entire trial
-            % (1.5 seconds)
-            prob_go = integral(@(y) wfpt(y,-v,a),0,mx);
+            % (1.5 seconds - non decision time)
+            prob_go = integral(@(y) wfpt(y,-v,a,w),0,mx);
             action_probs = [1-prob_go prob_go];
             c = randsample(1:2, 1, true, action_probs);
             action_probability = action_probs(c);
@@ -180,7 +189,7 @@ function [lik, latents] = likfun_gonogo(x,data, fitted_params)
          
         
         % store latent variables
-        if nargout > 1
+  %      if nargout > 1
             latents.v(t,1) = v;
             %latents.P(t,1) = 1/(1+exp(-a*v));
             %latents.RT_mean(t,1) = (0.5*a/v)*tanh(0.5*a*v)+T;
@@ -191,7 +200,10 @@ function [lik, latents] = likfun_gonogo(x,data, fitted_params)
             latents.rt = data.rt;
             latents.trial_type = data.trial_type;
             
-        end
+    %    end
         
     end
+    
+end
+    
     
