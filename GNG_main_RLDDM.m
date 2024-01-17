@@ -1,4 +1,5 @@
 % MAIN GO NO GO WRAPPER
+clear all;
 rng(23);
 dbstop if error
 
@@ -7,11 +8,12 @@ FIT = true;
 use_fmincon = false;
 use_laplace = true;
 plot = true;
+use_ddm = true;
 
 % load the data in
 if ispc
     root = 'L:';
-    fileName = 'L:/rsmith/lab-members/cgoldman/go_no_go/DDM/processed_behavioral_files_DDM/AA164_processed_behavioral_file.csv';
+    fileName = 'L:/rsmith/lab-members/cgoldman/go_no_go/DDM/processed_behavioral_files_DDM/AA022_processed_behavioral_file.csv';
     results_dir = 'L:/rsmith/lab-members/cgoldman/go_no_go/DDM/RL_DDM_Millner/RL_DDM_fits';
     lastSlashPos = find(fileName == '/', 1, 'last');
     subject = fileName(lastSlashPos + 1 : lastSlashPos + 5);
@@ -19,8 +21,12 @@ else
     root = '/media/labs';
     fileName = getenv('SUBJECT');
     results_dir = getenv('RESULTS');
+    estimation_prior = getenv('ESTIMATION_PRIOR');
+    field = getenv('FIELD');
     lastSlashPos = find(fileName == '/', 1, 'last');
     subject = fileName(lastSlashPos + 1 : lastSlashPos + 5);
+    DCM.MDP = estimation_prior;
+    DCM.field = field;
 end
 
 if SIM
@@ -29,17 +35,28 @@ if SIM
     gen_params.alpha_win = .5;
     gen_params.alpha_loss = .5;
     gen_params.beta = .05;
-    gen_params.zeta = .9;
+    gen_params.zeta = .5;
     gen_params.pi_win = .05;
     gen_params.pi_loss = .05;
-    gen_params.T = .3;
+    gen_params.T = .25;
     %gen_params.a = 1;
     disp(['Simulating game from AA022']);
-    model_output = sim_gonogo(gen_params);
+    model_output = sim_gonogo(gen_params,use_ddm);
     
 end
 
 if FIT
+    estimation_prior.rs = 1;
+    estimation_prior.la = 1;
+    estimation_prior.alpha_win = .5;
+    estimation_prior.alpha_loss = .5;
+    estimation_prior.beta = .05;
+    estimation_prior.zeta = .5;
+    estimation_prior.pi_win = .1;
+    estimation_prior.pi_loss = .1;
+    estimation_prior.T = .25;
+    DCM.MDP = estimation_prior;
+    DCM.field = {'rs';'la';'alpha_win'; 'alpha_loss'; 'beta'; 'zeta'; 'pi_win'; 'pi_loss'};
     data = load_gonogo_data(fileName);
     if use_fmincon
         addpath([root '/rsmith/lab-members/cgoldman/go_no_go/DDM/RL_DDM_Millner/mfit-master']);
@@ -51,18 +68,7 @@ if FIT
         disp(['Fitting subject with variational laplace:', subject]);
         addpath([root '/rsmith/all-studies/util/spm12/']);
         addpath([root '/rsmith/all-studies/util/spm12/toolbox/DEM/']);
-        estimation_prior.rs = 1;
-        estimation_prior.la = 1;
-        estimation_prior.alpha_win = .5;
-        estimation_prior.alpha_loss = .5;
-        estimation_prior.beta = .1;
-        estimation_prior.zeta = .9;
-        estimation_prior.pi_win = .1;
-        estimation_prior.pi_loss = .1;
-        estimation_prior.T = .25;
-       % estimation_prior.a = 1;
-        DCM.MDP = estimation_prior;
-        DCM.field = fieldnames(DCM.MDP);
+        DCM.use_ddm = use_ddm;
         DCM.U = data;
         DCM.Y = [];
         fit_result = fit_gonogo_laplace(DCM,plot);
@@ -71,20 +77,26 @@ if FIT
     
     % create res object
     res.subject = subject;
-    fieldNames = fieldnames(fit_result.posterior);
-    % Loop over each field name and copy the value to res
-    for i = 1:length(fieldNames)
-        fieldName = fieldNames{i};
-        res.(fieldName) = fit_result.posterior.(fieldName);
-    end
+    res.use_ddm = use_ddm;
     res.avg_action_probability = fit_result.avg_action_probability;
     res.model_accuracy = fit_result.model_accuracy;
+
+    % Loop over prior and posterior values
+    params = fieldnames(fit_result.prior);
+    for i = 1:length(params)
+        param = params{i};
+        res.(strcat(param,"_prior")) = fit_result.prior.(param);
+        if isfield(fit_result.posterior, param)
+            res.(param) = fit_result.posterior.(param);
+        end
+    end
+
    % res.aic = fit_result.aic;
 
     writetable(struct2table(res), [results_dir '/GNG_RLDDM-' subject '_fits.csv']);
     save([results_dir '/' subject '_fit_result'], 'fit_result');
     saveas(gcf,[results_dir '/' subject '_fit_plot.png']);
-    
+    clear all; clf;
 end
 
 

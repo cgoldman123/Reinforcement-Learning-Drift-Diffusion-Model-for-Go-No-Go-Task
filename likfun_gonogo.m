@@ -1,4 +1,4 @@
-function [lik, latents] = likfun_gonogo(x,data)
+function [lik, latents] = likfun_gonogo(x,data,use_ddm)
     rng(23);
     % Likelihood function for Go/NoGo task.
     
@@ -21,7 +21,7 @@ function [lik, latents] = likfun_gonogo(x,data)
     %           .P - [N x 1] probability density of Go
     %           .RT_mean - [N x 1] mean response time for Go
     %
-    % Sam Gershman, Nov 2015
+    % Carter Goldman and Sam Gershman, 2024
     
     % if fitted_params isn't passed in, initialize to false because not
     % dealing with fitted params
@@ -61,7 +61,6 @@ function [lik, latents] = likfun_gonogo(x,data)
     
     % initialization
     lik = 0; 
-   % data.rt = max(eps,data.rt - T);
 
     % state/action mapping to value
     Q = zeros(4,2);
@@ -81,44 +80,43 @@ function [lik, latents] = likfun_gonogo(x,data)
         % calculate pavlovian influence
         if s == 1 || s == 3
             pav = pi_win*V(s);
-        % adjust starting point for avoid losing condition
         elseif s == 2 || s == 4
             pav = pi_loss*V(s);
         end
                                     
-        % drift rate v
-        v = zeta*(Q(s,2)-Q(s,1));
-        % starting bias w; bound between 0 and 1
-        w = .5 - (beta+pav);
-        w = max(w, .00001);
-        w = min(w,1-.00001);
-        %w = .5;
-        % accumulate log-likelihod
-        % if fitting data
-        if fitting
+        %%%% GET PROBABILITY OF GO RESPONSE
+        if use_ddm
+            % drift rate v
+            v = zeta*(Q(s,2)-Q(s,1));
+            % starting bias w; bound between 0 and 1
+            w = .5 - (beta+pav);
+            w = max(w, .00001);
+            w = min(w,1-.00001);
             go_probability = integral(@(y) wfpt(y,-v,a,w),0,mx);
-            % Go response
-            if c == 2 
+            action_probs = [1-go_probability go_probability];
+        else
+            weight_go = Q(s,2) + beta + pav;
+            weight_nogo = Q(s,1);
+            go_probability = (exp(weight_go) / (exp(weight_go)+exp(weight_nogo)))*(1-zeta) + (zeta/2);
+            action_probs = [1-go_probability go_probability];
+        end
+        
+        %%%% Fitting DATA %%%%
+        if fitting
+            action_probability = action_probs(c);
+            %%% Fit reaction time pdf if go response and DDM %%%%
+            if c == 2 && use_ddm
                 % Wiener first passage time distribution calculates probability density that
                 % the diffusion process hits the lower boundary at data.rt(t) - T. 
                 % We pass in negative drift rate so lower boundary becomes "go"
                 time_after_nondecision = max(T,data.rt(t)-T);
                 P = wfpt(time_after_nondecision,-v,a,w);  
-                % to get the action probability of hitting the go boundary
-                action_probability = go_probability; 
-            % NoGo response
             else
-                % probability of hitting nogo boundary
-                action_probability = 1 - go_probability;
                 P = action_probability;
             end
             
+        %%%% SIMULATING DATA %%%%
         else
-            % simulating data
-            % get probability of hitting go boundary during entire trial
-            % (1.5 seconds - non decision time)
-            prob_go = integral(@(y) wfpt(y,-v,a,w),0,mx);
-            action_probs = [1-prob_go prob_go];
             c = randsample(1:2, 1, true, action_probs);
             action_probability = action_probs(c);
             P = action_probability;
@@ -133,7 +131,6 @@ function [lik, latents] = likfun_gonogo(x,data)
             % prob_win is 80% if did correct thing, 20% otherwise
             prob_win = 0.2 + 0.6 * did_correct_choice;
             r = randsample(rewardMatrix(s,:), 1, true,[(1-prob_win) prob_win]); 
-            
         end
         
         
@@ -164,13 +161,10 @@ function [lik, latents] = likfun_gonogo(x,data)
 %         end
 %         
         
-     
-        
+        %%%% Accumulate log likelihood %%%%
         if P < 0
             fprintf("Negative probability density calculated!");
         end
-
-
         if isnan(P) || P==0; P = realmin; end % avoid NaNs and zeros in the logarithm
         lik = lik + log(P);
         
@@ -184,22 +178,21 @@ function [lik, latents] = likfun_gonogo(x,data)
             Q(s,c) = Q(s,c) + alpha_loss*(r*la - Q(s,c));
             V(s) = V(s) + alpha_loss*(r*la - V(s));
         end
-
-         
         
         % store latent variables
-  %      if nargout > 1
+        if use_ddm
             latents.v(t,1) = v;
             %latents.P(t,1) = 1/(1+exp(-a*v));
             %latents.RT_mean(t,1) = (0.5*a/v)*tanh(0.5*a*v)+T;
-            latents.P(t,1) = P;
-            latents.action_probabilities(t) = action_probability;
-            latents.r(t) = r;
-            latents.c(t) = c;
-            latents.rt = data.rt;
-            latents.trial_type = data.trial_type;
+        end
+        latents.P(t,1) = P;
+        latents.action_probabilities(t) = action_probability;
+        latents.r(t) = r;
+        latents.c(t) = c;
+        latents.rt = data.rt;
+        latents.trial_type = data.trial_type;
             
-    %    end
+
         
     end
     

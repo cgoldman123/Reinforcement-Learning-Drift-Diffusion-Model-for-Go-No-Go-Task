@@ -10,27 +10,32 @@ DCM        = inversion_gonogo_laplace(DCM);   % Invert the model
 field = fieldnames(DCM.M.pE);
 for i = 1:length(field)
     if strcmp(field{i},'alpha_win') || strcmp(field{i},'alpha_loss')
-        prior.(field{i}) = 1/(1+exp(-DCM.M.pE.(field{i})));
         posterior.(field{i}) = 1/(1+exp(-DCM.Ep.(field{i})));
     elseif strcmp(field{i},'zeta')
-        prior.(field{i}) = 1/(1+exp(-DCM.M.pE.(field{i})));
         posterior.(field{i}) = 1/(1+exp(-DCM.Ep.(field{i})));       
     elseif strcmp(field{i},'T')
-        prior.(field{i}) = 1.5*exp(DCM.M.pE.(field{i})) / (exp(DCM.M.pE.(field{i}))+1);
         posterior.(field{i}) = 1.5*exp(DCM.Ep.(field{i})) / (exp(DCM.Ep.(field{i}))+1);
     elseif strcmp(field{i},'beta') || strcmp(field{i},'a') || strcmp(field{i},'rs') || ...
         strcmp(field{i},'la') || strcmp(field{i},'pi_win') || strcmp(field{i},'pi_loss')
-        prior.(field{i}) = exp(DCM.M.pE.(field{i}));
         posterior.(field{i}) = exp(DCM.Ep.(field{i})); 
     else
         fprintf("Warning: Was not expecting this prior/posterior field name. See fit_gonogo_laplace");
         field{i}
-        prior.(field{i}) = exp(DCM.M.pE.(field{i}));
         posterior.(field{i}) = exp(DCM.Ep.(field{i}));
     end
 end
+params = posterior;
+prior = DCM.M.priors;
+% make sure the params that are not being fit are still passed into
+% the likelihood function and loaded into priors
+priors_names = fieldnames(prior);
+for i = 1:length(priors_names)
+    if ~isfield(params, priors_names{i})
+        params.(priors_names{i}) = prior.(priors_names{i});
+    end
+end
 
-[lik,latents] = likfun_gonogo(posterior, DCM.U);
+[lik,latents] = likfun_gonogo(params, DCM.U,DCM.use_ddm);
 if plot
     model_output.action_probabilities = latents.action_probabilities;
     model_output.observations = latents.r;

@@ -42,7 +42,7 @@ ALL = false;
 
 % prior expectations and covariance
 %--------------------------------------------------------------------------
-prior_variance = 2^-2;
+prior_variance = 2^-1;
 
 % Set up DCM
 %--------------------------------------------------------------------------
@@ -114,7 +114,8 @@ pC      = spm_cat(pC);
 M.L     = @(P,M,U,Y)spm_mdp_L(P,M,U,Y);  % log-likelihood function
 M.pE    = pE;                            % prior means (parameters)
 M.pC    = pC;                            % prior variance (parameters)
-
+M.use_ddm = DCM.use_ddm;                 % indicate if want to use ddm
+M.priors = DCM.MDP;
 
 % Variational Laplace
 %--------------------------------------------------------------------------
@@ -168,18 +169,28 @@ for i = 1:length(field)
     elseif strcmp(field{i},'a')
         params.(field{i}) = exp(P.(field{i}));
     elseif strcmp(field{i},'alpha_win')
-        params.alpha_win = 1/(1+exp(-P.(field{i})));
+        params.(field{i}) = 1/(1+exp(-P.(field{i})));
     elseif strcmp(field{i},'alpha_loss')
-        params.alpha_loss = 1/(1+exp(-P.(field{i})));
+        params.(field{i}) = 1/(1+exp(-P.(field{i})));
     elseif strcmp(field{i},'T')
-        params.T = 1.5*exp(P.(field{i})) / (exp(P.(field{i}))+1);
+        params.(field{i}) = 1.5*exp(P.(field{i})) / (exp(P.(field{i}))+1);
     else
         fprintf("Warning: one of parameters not being properly transformed. See inversion_gonogo_laplace");
         params.(field{i}) = exp(P.(field{i}));
     end
 end
 
-L = likfun_gonogo(params,U);
+% make sure the params that are not being fit are still passed into
+% the likelihood function
+priors_names = fieldnames(M.priors);
+priors = M.priors;
+for i = 1:length(priors_names)
+    if ~isfield(params, priors_names{i})
+        params.(priors_names{i}) = priors.(priors_names{i});
+    end
+end
+
+L = likfun_gonogo(params,U,M.use_ddm);
 if (~isreal(L))
     fprintf("NOT REAL");
 end
