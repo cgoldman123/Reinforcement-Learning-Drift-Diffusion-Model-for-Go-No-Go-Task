@@ -15,7 +15,7 @@
         
 
 function [] = plot_gonogo(MDP, states_block)
-clf;
+figure;
 
 % 
 % graphics
@@ -64,8 +64,6 @@ else
 end
 % Find the trials corresponding to each block
 for block = 1:4
-
-    
     subplot(4,1,block)
     imagesc([choice_prob(:,:,block)]);
     caxis([min_P, max_P]);

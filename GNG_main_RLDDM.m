@@ -13,7 +13,7 @@ use_ddm = true;
 % load the data in
 if ispc
     root = 'L:';
-    fileName = 'L:/rsmith/lab-members/cgoldman/go_no_go/DDM/processed_behavioral_files_DDM/AA022_processed_behavioral_file.csv';
+    fileName = 'L:/rsmith/lab-members/cgoldman/go_no_go/DDM/processed_behavioral_files_DDM/BE596_processed_behavioral_file.csv';
     results_dir = 'L:/rsmith/lab-members/cgoldman/go_no_go/DDM/RL_DDM_Millner/RL_DDM_fits';
     lastSlashPos = find(fileName == '/', 1, 'last');
     subject = fileName(lastSlashPos + 1 : lastSlashPos + 5);
@@ -34,12 +34,12 @@ if SIM
     gen_params.la = 1;
     gen_params.alpha_win = .5;
     gen_params.alpha_loss = .5;
-    gen_params.beta = .05;
+    gen_params.beta = .5;
     gen_params.zeta = .5;
-    gen_params.pi_win = .05;
-    gen_params.pi_loss = .05;
+    gen_params.pi_win = .5;
+    gen_params.pi_loss = 2;
     gen_params.T = .25;
-    %gen_params.a = 1;
+    gen_params.a = 2;
     disp(['Simulating game from AA022']);
     model_output = sim_gonogo(gen_params,use_ddm);
     
@@ -50,11 +50,12 @@ if FIT
     estimation_prior.la = 1;
     estimation_prior.alpha_win = .5;
     estimation_prior.alpha_loss = .5;
-    estimation_prior.beta = .05;
+    estimation_prior.beta = .5;
     estimation_prior.zeta = .5;
-    estimation_prior.pi_win = .1;
-    estimation_prior.pi_loss = .1;
+    estimation_prior.pi_win = 1;
+    estimation_prior.pi_loss = 1;
     estimation_prior.T = .25;
+    estimation_prior.a = 2;
     DCM.MDP = estimation_prior;
     DCM.field = {'rs';'la';'alpha_win'; 'alpha_loss'; 'beta'; 'zeta'; 'pi_win'; 'pi_loss'};
     data = load_gonogo_data(fileName);

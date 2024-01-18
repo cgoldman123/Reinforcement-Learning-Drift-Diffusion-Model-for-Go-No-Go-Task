@@ -49,15 +49,13 @@ function [lik, latents] = likfun_gonogo(x,data,use_ddm)
         zeta = x.zeta;
         pi_win = x.pi_win;
         pi_loss = x.pi_loss;
-        %a = x.a;
+        a = x.a;
         alpha_win = x.alpha_win;
         alpha_loss = x.alpha_loss;
         T = x.T;
         rs = x.rs;
         la = x.la;
-    end
-    % fix decision threshold to 1
-    a = 1;    
+    end 
     
     % initialization
     lik = 0; 
@@ -87,11 +85,9 @@ function [lik, latents] = likfun_gonogo(x,data,use_ddm)
         %%%% GET PROBABILITY OF GO RESPONSE
         if use_ddm
             % drift rate v
-            v = zeta*(Q(s,2)-Q(s,1));
-            % starting bias w; bound between 0 and 1
-            w = .5 - (beta+pav);
-            w = max(w, .00001);
-            w = min(w,1-.00001);
+            v = zeta*(Q(s,2)-Q(s,1)) + pav + beta;
+            % bias w
+            w = .5;
             go_probability = integral(@(y) wfpt(y,-v,a,w),0,mx);
             action_probs = [1-go_probability go_probability];
         else
@@ -138,26 +134,32 @@ function [lik, latents] = likfun_gonogo(x,data,use_ddm)
         % let's plot how well the function does
         % Define the time range
 %         if (t == 160 | t == 140 | t == 120 | t == 100 | t == 80 | t == 60) && fitted_params
-%             z = 0:0.01:mx; % Time from 0 to 2 seconds in 0.01 second increments
-% 
+%             clf;
+%             mx = 1.3;
+%             rt = .3;
+%             v = .05;
+%             w = .6;
+%             a = 2;
+%             z = 0:0.01:mx; % Time from 0 to mx seconds in 0.01 second increments
+%             
 %             % Preallocate array for PDF values
 %             pdf_values = zeros(size(z));
 % 
 %             % Compute the PDF for each time value
 %             for i = 1:length(z)
-%                 pdf_values(i) = wfpt(z(i), -v, a);
+%                 pdf_values(i) = wfpt(z(i), -v, a, w);
 %             end
 % 
 %             % Plot the PDF
 %             figure;
 %             plot(z, pdf_values);
 %             hold on; % Keep the current plot
-%             line([data.rt(t) data.rt(t)], ylim, 'Color', 'red', 'LineWidth', 2);
+%             line([rt rt], ylim, 'Color', 'red', 'LineWidth', 2);
 %             hold off;
 %             xlabel('Time (s)');
 %             ylabel('Probability Density');
-%             title(['Wiener Diffusion Model PDF at t = ', num2str(t)]);
-% 
+%             title(['Wiener Diffusion Model PDF at t = ', num2str(rt)]);
+%           clf
 %         end
 %         
         
