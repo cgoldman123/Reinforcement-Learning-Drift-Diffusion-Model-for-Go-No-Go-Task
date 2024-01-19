@@ -1,5 +1,5 @@
 function extractparams()
-directory = dir('L:\rsmith\lab-members\cgoldman\go_no_go\DDM\RL_DDM_Millner\RL_DDM_fits\rlddm_eight_params');
+directory = dir('L:\rsmith\lab-members\cgoldman\go_no_go\DDM\RL_DDM_Millner\RL_DDM_fits\rlddm_eight_params_all_affect_drift');
 index_array = find(arrayfun(@(n) contains(directory(n).name, 'csv'),1:numel(directory)));
 for index = index_array
     file = [directory(index).folder '\' directory(index).name];
@@ -34,7 +34,7 @@ end
 
 fit_table = cell2table(fitted_data, 'VariableNames', colnames);
 
-writetable(fit_table, ['L:\rsmith\lab-members\cgoldman\go_no_go\r_stats\' 'GNG_rlddm_eight_params.csv'], 'WriteRowNames',true);
+writetable(fit_table, ['L:\rsmith\lab-members\cgoldman\go_no_go\r_stats\' 'GNG_rlddm_eight_params_all_affect_drift.csv'], 'WriteRowNames',true);
 
 
 
