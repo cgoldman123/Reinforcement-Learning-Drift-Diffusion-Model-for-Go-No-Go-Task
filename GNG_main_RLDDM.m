@@ -57,7 +57,7 @@ if FIT
     estimation_prior.T = .25;
     estimation_prior.a = 2;
     DCM.MDP = estimation_prior;
-    DCM.field = {'rs';'la';'alpha_win'; 'alpha_loss'; 'beta'; 'zeta'; 'pi_win'; 'pi_loss';'a'};
+    DCM.field = {'alpha_win'; 'alpha_loss'; 'beta'; 'zeta'; 'pi_win'; 'pi_loss';'a'};
     data = load_gonogo_data(fileName);
     if use_fmincon
         addpath([root '/rsmith/lab-members/cgoldman/go_no_go/DDM/RL_DDM_Millner/mfit-master']);
@@ -81,6 +81,7 @@ if FIT
     res.use_ddm = use_ddm;
     res.avg_action_probability = fit_result.avg_action_probability;
     res.model_accuracy = fit_result.model_accuracy;
+    res.F = fit_result.F;
 
     % Loop over prior and posterior values
     params = fieldnames(fit_result.prior);
